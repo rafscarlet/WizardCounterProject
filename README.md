@@ -1,6 +1,7 @@
 # WizardCounterProject
  Tkinter desktop app
 
+
 BASIC FUNCTIONALITY: 
 - [x] Create player objects with each name given by the user 
 - [x] Calculate round points and display the total points 
