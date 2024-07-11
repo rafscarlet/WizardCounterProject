@@ -36,11 +36,10 @@ class MyApp(Tk):
         self.show_frame("StartScreen", {})
 
     def show_frame(self, page_name, players):
-        if page_name not in self.frames:
-            frame_class = globals()[page_name]
-            frame = frame_class(parent=self, controller=self, players=players)
-            self.frames[page_name] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+        frame_class = globals()[page_name]
+        frame = frame_class(parent=self, controller=self, players=players)
+        self.frames[page_name] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
         frame = self.frames[page_name]
         frame.tkraise()
 
@@ -107,21 +106,23 @@ class StartScreen(Frame):
     def add_player(self):
         name = self.name_entry.get().title()
 
-        if len(self.players) > 6:
-            messagebox.showwarning(
-                title='Oops...', message="There can only be up to 6 players! \n(*Game's rules not mine*)")
+        # Check user's input
+        if len(self.players) >= 6:
+            messagebox.showwarning(title='Too many players!', message="There can only be up to 6 players! \n(*Game's rules not mine*)")
 
         elif len(name.strip()) == 0:
-            messagebox.showwarning(
-                title='Oops...', message="You can't enter an empty name! Try again.")
+            messagebox.showwarning(title='Empty Name', message="You can't enter an empty name! Try again.")
+            
+        elif len(name.strip()) > 10:
+            messagebox.showwarning(title='Too big name', message="That's too many characters. Tru again.")
 
         elif name in self.players:
-            messagebox.showwarning(
-                title='Oops...', message="You have already entered this name. Try again.")
+            messagebox.showwarning(title='Repetition', message="You have already entered this name. Try again.")
+            self.name_entry.delete(0, END)
 
         else:
             # Add each name to player dictionary
-            self.players[name] = Player(name)
+            self.players[name] = Player(name.strip())
             # Clear the entry box
             self.name_entry.delete(0, END)
             # Update the name label text
@@ -144,8 +145,7 @@ class StartScreen(Frame):
             messagebox.showwarning(
                 title="Hmmm", message="There are not enough players! \nThis game is designed for 3-6 players")
         else:
-            self.controller.show_frame(
-                page_name='GameScreen', players=self.players)
+            self.controller.show_frame(page_name='GameScreen', players=self.players)
 
     def load_names(self):
         try:
@@ -230,8 +230,7 @@ class GameScreen(Frame):
             self.points_dict[name] = Label(framebox, text=0, font=BOLD_FONT)
             self.points_dict[name].grid(row=j+1, column=3, sticky='EW')
 
-            self.total_dict[name] = Label(
-                framebox, text=self.players[name].total, font=BOLD_FONT)
+            self.total_dict[name] = Label(framebox, text=self.players[name].total, font=BOLD_FONT)
             self.total_dict[name].grid(row=j+1, column=4, sticky='EW')
 
         # Buttons
@@ -276,6 +275,7 @@ class GameScreen(Frame):
                     raise ValueError("Empty string or longer than 3-digits.")
 
                 player.calculate_points(int(pred), int(wins))
+                print(player.points)
 
                 # Update Labels
                 self.points_dict[name].config(text=player.points)
@@ -293,7 +293,6 @@ class GameScreen(Frame):
         for name in self.players:
             self.predbox_dict[name].delete(0, END)
             self.winbox_dict[name].delete(0, END)
-            self.points_dict[name].config(text='0')
 
     def update_narrator(self):
         round_phr = random.choice(round_phrases)
@@ -326,8 +325,7 @@ class GameScreen(Frame):
         go_on = messagebox.askokcancel(title="The End (?)",
                                        message="If you want to keep the data of this game to continue another time be sure to hit save before leaving!\nDo you want to proceed to the leaderboard?")
         if go_on:
-            self.controller.show_frame(
-                'LeaderboardScreen', players=self.players)
+            self.controller.show_frame('LeaderboardScreen', players=self.players)
 
 
 class LeaderboardScreen(Frame):
@@ -396,7 +394,7 @@ class LeaderboardScreen(Frame):
             self.controller.show_frame('GameScreen', players=self.players)
         else:
             self.players = {}
-            self.controller.show_frame('StartScreen', player=self.players)
+            self.controller.show_frame('StartScreen', players=self.players)
 
 
 app = MyApp()
