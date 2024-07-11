@@ -1,3 +1,0 @@
-mike: -10
-koko: 50
-dona: -20

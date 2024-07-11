@@ -155,6 +155,7 @@ class GameScreen(Frame):
         self.controller = controller
         self.players = players
 
+        # -------- UI -------- #
         framebox = Frame(self)
         framebox.grid(row=0, column=0, padx=50, pady=10, sticky='nsew')
         for i, j in zip(range(len(self.players)+1), range(5)):
@@ -204,6 +205,11 @@ class GameScreen(Frame):
             self.total_dict[name] = Label(framebox, text=self.players[name].total, font=BOLD_FONT)
             self.total_dict[name].grid(row=j+1, column=4, sticky='EW')
 
+        # Buttons
+        save_btn = Button(framebox, text='Save',
+                               font=BOLD_FONT, width=10, command=self.save_game)
+        save_btn.grid(row=len(self.players)+1, column=0, pady=5)
+
         calculate_btn = Button(framebox, text='Calculate',
                                font=BOLD_FONT, width=15, command=self.calculate_points)
         calculate_btn.grid(row=len(self.players)+1,
@@ -220,6 +226,15 @@ class GameScreen(Frame):
         self.narrator = Label(narratorbox, text='Play your first round to see who is leading!',
                          font=NORMAL_FONT, justify='center', wraplength=400)
         self.narrator.grid(row=0, column=0, sticky="EW")
+
+
+    def save_game(self):
+        with open('game_logs.csv','w') as logs:
+            writer = csv.writer(logs,lineterminator='\n')
+            for name, player in self.players.items():
+                writer.writerow([name, player.total])
+        
+        messagebox.showinfo(title='Success!', message="The game data has been stored! Come back and load it to continue playing!")
 
 
     def calculate_points(self):
@@ -276,13 +291,6 @@ class GameScreen(Frame):
 
         self.narrator.config(text=phrase_choice)    
 
-    
-    def save_game(self):
-        with open('game_logs.csv','w') as logs:
-            for name, player in self.players.items():
-
-                writer = csv.writer(logs,lineterminator='\n')
-                writer.writerow([name, player.total])
 
 
 class LeaderboardScreen(Frame):
@@ -291,22 +299,25 @@ class LeaderboardScreen(Frame):
         self.controller = controller
         self.players = players
 
+        playerlist = [self.players[name] for name in self.players]
+        leaderboard = sorted(playerlist, key=lambda x: x.total, reverse=True)
+
         total_list = [player.total for player in self.players.values()]
         winners = [name for name, player in self.players.items() if player.total == max(total_list)]
         winners_str = ' and '.join(winners)
-
-        namelist =''
-        scorelist=''
-        for name in self.players:
-            namelist+= (f'{name}\n')
-            scorelist+=(f'{self.players[name].total}\n')
+        
+        namestr=''
+        scorestr=''
+        for player in leaderboard:
+            namestr+= (f'{player.name}\n')
+            scorestr+=(f'{player.total}\n')
 
         # UI 
         centerframe= Frame(self)
         centerframe.grid(row=0,column=0,sticky='nsew',padx=100)
-        for i,j in zip(range(3), range(2)):
+        for i,j in zip(range(4), range(2)):
             centerframe.rowconfigure(i, weight=1, pad=100)
-            centerframe.columnconfigure(i, weight=1)
+            centerframe.columnconfigure(j, weight=1)
 
         title_label = Label(centerframe, text='GG!😎', font=TITLE_FONT)
         title_label.grid(row=0,column=0,columnspan=2, sticky='EW')
@@ -314,11 +325,19 @@ class LeaderboardScreen(Frame):
         winner_label = Label(centerframe, fg='red', text=f'Congratulations to {winners_str}!🎉', font=BOLD_FONT)
         winner_label.grid(row=1,column=0,columnspan=2, sticky='EW')
 
-        names_label = Label(centerframe,text=namelist,font=NORMAL_FONT)
+        names_label = Label(centerframe,text=namestr,font=NORMAL_FONT)
         names_label.grid(row=2, column=0, sticky= 'ns')
 
-        score_label = Label(centerframe,text=scorelist,font=NORMAL_FONT)
+        score_label = Label(centerframe,text=scorestr,font=NORMAL_FONT)
         score_label.grid(row=2, column=1, sticky= 'ns')
+
+        # Buttons
+
+        new_game_btn = Button(centerframe, text='New Game', width = 10, font=BOLD_FONT)
+        new_game_btn.grid(row=3, column=1)
+
+        exit_btn = Button(centerframe, text='Exit', width = 10, font=BOLD_FONT, command=exit)
+        exit_btn.grid(row=3, column=0)
 
 
 
