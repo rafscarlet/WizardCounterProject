@@ -219,12 +219,12 @@ class GameScreen(Frame):
 
             self.predbox_dict[name] = Entry(
                 framebox, font=NORMAL_FONT, width=5, justify='center')
-            self.predbox_dict[name].insert(0, string='0')
+            # self.predbox_dict[name].insert(0, string='0')
             self.predbox_dict[name].grid(row=j+1, column=1)
 
             self.winbox_dict[name] = Entry(
                 framebox, font=NORMAL_FONT, width=5, justify='center')
-            self.winbox_dict[name].insert(0, string='0')
+            # self.winbox_dict[name].insert(0, string='0')
             self.winbox_dict[name].grid(row=j+1, column=2)
 
             self.points_dict[name] = Label(framebox, text=0, font=BOLD_FONT)
@@ -237,7 +237,7 @@ class GameScreen(Frame):
         # Buttons
         save_btn = Button(framebox, text='Save',
                           font=BOLD_FONT, width=10, command=self.save_game)
-        save_btn.grid(row=len(self.players)+1, column=0, pady=5)
+        save_btn.grid(row=len(self.players)+1, column=0, pady=10)
 
         calculate_btn = Button(framebox, text='Calculate',
                                font=BOLD_FONT, width=15, command=self.calculate_points)
@@ -251,7 +251,7 @@ class GameScreen(Frame):
 
         narratorbox = Frame(self)
         narratorbox.grid(row=len(self.players)+2, column=0,
-                         columnspan=5, pady=30, sticky="N")
+                         columnspan=5, pady=10, sticky="NS")
 
         self.narrator = Label(narratorbox, text='Play your first round to see who is leading!',
                               font=NORMAL_FONT, justify='center', wraplength=400)
@@ -331,7 +331,7 @@ class GameScreen(Frame):
 
 
 class LeaderboardScreen(Frame):
-    def __init__(self, parent, controller, players: list[Player]):
+    def __init__(self, parent, controller:MyApp, players: list[Player]):
         super().__init__(parent)
         self.controller = controller
         self.players = players
@@ -372,8 +372,7 @@ class LeaderboardScreen(Frame):
         # Roast Label
         winner = random.choice(winners)
         loser = random.choice(losers)
-        # chosen_phrase = random.choice(roast_phrases)
-        chosen_phrase = roast_phrases[6]
+        chosen_phrase = random.choice(roast_phrases)
         chosen_phrase = chosen_phrase.replace("[WINNER]", winner)
         chosen_phrase = chosen_phrase.replace("[LOSER]", loser)
         roast_label = Label(centerframe, text=chosen_phrase, font=BOLD_FONT, justify='center', wraplength=300)
@@ -381,13 +380,12 @@ class LeaderboardScreen(Frame):
 
         # Buttons
 
-        new_game_btn = Button(centerframe, text='New Game',
-                              width=10, font=BOLD_FONT)
-        new_game_btn.grid(row=4, column=1, pady=10)
+        new_game_btn = Button(centerframe, text='New Game', width=10, font=BOLD_FONT, command=self.new_game)
+        new_game_btn.grid(row=4, column=1, pady=20)
 
         exit_btn = Button(centerframe, text='Exit', width=10,
                           font=BOLD_FONT, command=exit)
-        exit_btn.grid(row=4, column=0, pady=10)
+        exit_btn.grid(row=4, column=0, pady=20)
 
     def new_game(self):
         same_names = messagebox.askyesno(
@@ -395,10 +393,10 @@ class LeaderboardScreen(Frame):
         if same_names:
             for player in self.players.values():
                 player.total = 0
-            self.controller.showframe('GameScreen', players=self.players)
+            self.controller.show_frame('GameScreen', players=self.players)
         else:
             self.players = {}
-            self.controller.showframe('StartScreen', player=self.players)
+            self.controller.show_frame('StartScreen', player=self.players)
 
 
 app = MyApp()
