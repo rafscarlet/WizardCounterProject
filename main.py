@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from player import Player
 import random
+import csv
 
 TITLE_FONT = ('Courier', 20, "bold")
 NORMAL_FONT = ('Courier', 13, "normal")
@@ -29,75 +30,49 @@ class MyApp(Tk):
         self.frames = {}
 
         # Start with the main screen
-        self.show_frame("StartScreen", None)
+        self.show_frame("StartScreen", {})
 
     def show_frame(self, page_name, players):
         if page_name not in self.frames:
             frame_class = globals()[page_name]
             frame = frame_class(parent=self, controller=self, players=players)
             self.frames[page_name] = frame
-            frame.grid(row=0, column=0, sticky="nsew")  # Use grid layout
-
+            frame.grid(row=0, column=0, sticky="nsew") 
         frame = self.frames[page_name]
         frame.tkraise()
 
 
 class StartScreen(Frame):
-    def __init__(self, parent, controller: MyApp, players: list[Player]):
+    def __init__(self, parent, controller: MyApp, **kwargs):
         super().__init__(parent)
         self.controller = controller
-        self.player_names = []
         self.players = {}
-
-        def add_player():
-            name = name_entry.get()
-
-            if len(name.strip()) == 0:
-                messagebox.showwarning(
-                    title='Oops...', message="You can't enter an empty name! Try again")
-            else:
-                # Make a string with all the names and show it in the label
-                self.player_names.append(name)
-                players_str = 'Names: ' + ', '.join(self.player_names)
-                names_label.config(text=players_str)
-
-                # Add each name to player dictionary
-                self.players[name] = Player(name)
-
-            # Clear the entry box
-            name_entry.delete(0, END)
 
         # Create a frame to center the content
         center_frame = Frame(self)
-        center_frame.grid(row=0, column=0, sticky="nsew", padx=100, pady=50)
+        center_frame.grid(row=0, column=0, sticky="nsew", padx=100)
 
         label1 = Label(center_frame, text="Wizard Counter", font=TITLE_FONT)
-        # Add some vertical padding
         label1.grid(row=0, column=0, pady=20, columnspan=2)
 
         label2 = Label(
             center_frame, text="Enter Player's Names Below\n😎", font=NORMAL_FONT)
-        # Add some vertical padding
         label2.grid(row=1, column=0, pady=20, columnspan=2)
 
         label3 = Label(
             center_frame, text="Note: You have to enter 3-6 names!", font=SMALLER_FONT)
-        # Add some vertical padding
         label3.grid(row=2, column=0, pady=20, columnspan=2)
 
-        name_entry = Entry(center_frame, font=NORMAL_FONT)
-        name_entry.focus()
-        # Anchor removed for grid layout
-        name_entry.grid(row=3, column=0, columnspan=2, pady=10)
+        self.name_entry = Entry(center_frame, font=NORMAL_FONT)
+        self.name_entry.focus()
+        self.name_entry.grid(row=3, column=0, columnspan=2, pady=10)
 
-        names_label = Label(
+        self.names_label = Label(
             center_frame, text='The names you enter will appear here!', font=SMALLER_FONT)
-        # Anchor removed for grid layout
-        names_label.grid(row=4, column=0, columnspan=2, pady=10)
+        self.names_label.grid(row=4, column=0, columnspan=2, pady=10)
 
         add_btn = Button(center_frame, text="Add", width=20,
-                         font=NORMAL_FONT, command=add_player)
-        # Anchor removed for grid layout
+                         font=NORMAL_FONT, command=self.add_player)
         add_btn.grid(row=5, column=0, columnspan=2, pady=10)
 
         # Button frame
@@ -108,18 +83,77 @@ class StartScreen(Frame):
                           font=NORMAL_FONT, command=exit)
         exit_btn.grid(row=0, column=0, padx=10, pady=10)
 
+        load_btn = Button(button_frame, text="Load Names",
+                          font=NORMAL_FONT, command=self.load_names)
+        load_btn.grid(row=0, column=1, padx=10, pady=10)
+
         next_btn = Button(button_frame, text="Next", font=NORMAL_FONT,
                           command=lambda: self.controller.show_frame(page_name='GameScreen', players=self.players))
-        next_btn.grid(row=0, column=1, padx=10, pady=10)
+        next_btn.grid(row=0, column=2, padx=10, pady=10)
+
+
+    def add_player(self):
+        name = self.name_entry.get()
+
+        if len(name.strip()) == 0:
+            messagebox.showwarning(
+                title='Oops...', message="You can't enter an empty name! Try again.")
+        
+        elif name in self.players:
+            messagebox.showwarning(title='Oops...', message="You have already entered this name. Try again.")
+
+        else:
+            # Add each name to player dictionary
+            self.players[name] = Player(name)
+
+            # Clear the entry box
+            self.name_entry.delete(0, END)
+
+            # Update the name label text
+            self.update_label()
+
+
+    def update_label(self):
+        namelist = []
+        for name in self.players:
+            namelist.append(name)
+        players_str = 'Names: ' + ', '.join(namelist)
+        self.names_label.config(text=players_str)
+
+    def load_names(self):
+        try:
+            self.players = {}
+            with open('game_logs.csv') as logs: 
+                reader = csv.reader(logs, delimiter=',', lineterminator='\n')
+                for row in reader:
+                    name = row[0].strip() 
+                    score = row[1].strip()
+                    self.players[name] = Player(name, total=score)
+
+            if self.players == {}:
+                raise ValueError
+
+        except:
+            messagebox.showerror(title='Logs Not Found', message="There aren't any game logs. You need to start a new game.")
+
+        else: 
+            info=''
+            for name, player in self.players.items():
+                info += f'↪{name}: {player.total}\n'
+
+            saidYes = messagebox.askyesno(title='Logs Found', message=f'Here is the data I found:\n\n{info} \n Do you want to continue this game?')
+            if saidYes:
+                self.update_label()
+                self.controller.show_frame('GameScreen',players=self.players)
+            else:    
+                self.players = {}
 
 
 class GameScreen(Frame):
     def __init__(self, parent, controller, players: list[Player]):
         super().__init__(parent)
         self.controller = controller
-        # self.players = players
-        self.players = {'mike': Player('mike'), 'koko': Player(
-            'koko'), 'dona': Player('dona')}
+        self.players = players
 
         framebox = Frame(self)
         framebox.grid(row=0, column=0, padx=50, pady=10, sticky='nsew')
@@ -156,18 +190,18 @@ class GameScreen(Frame):
 
             self.predbox_dict[name] = Entry(
                 framebox, font=NORMAL_FONT, width=5, justify='center')
-            # self.predbox_dict[name].insert(0, string='0')
+            self.predbox_dict[name].insert(0, string='0')
             self.predbox_dict[name].grid(row=j+1, column=1)
 
             self.winbox_dict[name] = Entry(
                 framebox, font=NORMAL_FONT, width=5, justify='center')
-            # self.winbox_dict[name].insert(0, string='0')
+            self.winbox_dict[name].insert(0, string='0')
             self.winbox_dict[name].grid(row=j+1, column=2)
 
             self.points_dict[name] = Label(framebox, text=0, font=BOLD_FONT)
             self.points_dict[name].grid(row=j+1, column=3, sticky='EW')
 
-            self.total_dict[name] = Label(framebox, text=0, font=BOLD_FONT)
+            self.total_dict[name] = Label(framebox, text=self.players[name].total, font=BOLD_FONT)
             self.total_dict[name].grid(row=j+1, column=4, sticky='EW')
 
         calculate_btn = Button(framebox, text='Calculate',
@@ -176,7 +210,7 @@ class GameScreen(Frame):
                            column=1, columnspan=2, pady=5)
 
         end_game_btn = Button(framebox, text='End Game',
-                              font=BOLD_FONT, width=15, command=self.end_game)
+                              font=BOLD_FONT, width=15, command=lambda: self.controller.show_frame('LeaderboardScreen', self.players))
         end_game_btn.grid(row=len(self.players)+1,
                           column=3, columnspan=2, pady=5)
 
@@ -188,9 +222,7 @@ class GameScreen(Frame):
         self.narrator.grid(row=0, column=0, sticky="EW")
 
 
-
     def calculate_points(self):
-        
         try: 
             for name, player in self.players.items():
                 pred = self.predbox_dict[name].get()
@@ -199,13 +231,11 @@ class GameScreen(Frame):
                 if len(pred) == 0 or len(pred)>3 or len(wins)>3 or len(wins) ==0:
                     raise ValueError("Empty string or longer than 3-digits.")
                 
-                player.pred = int(pred)
-                player.wins = int(wins)
-                player.calculate_points()
+                player.calculate_points(int(pred), int(wins))
+
                 # Update Labels
                 self.points_dict[name].config(text=player.points)
                 self.total_dict[name].config(text=player.total)
-
 
         except ValueError:
                     messagebox.showerror(
@@ -215,26 +245,12 @@ class GameScreen(Frame):
             self.update_narrator()
             self.clear_boxes()
 
-    
-    def end_game(self):
-        scores = ''
-        self.clear_boxes()
-        for name, player in self.players.items():
-            scores +=f'\n{name}: {player.total}'
-        with open('game_logs.txt','w') as logs:
-            logs.write(scores)
-
-        winner = self.update_narrator()
-        
-        self.narrator.config(text=f'Congratulations {winner}!\nYou nailed it!{scores}')
-
 
     def clear_boxes(self):
         for name in self.players:
             self.predbox_dict[name].delete(0, END)
             self.winbox_dict[name].delete(0, END)
             self.points_dict[name].config(text='0')
-
 
     def update_narrator(self):
         round_phr = random.choice(round_phrases)
@@ -244,27 +260,68 @@ class GameScreen(Frame):
         round_list = [player.points for player in self.players.values()]
         total_list = [player.total for player in self.players.values()]
 
-        max_round = max(round_list)
-        max_total = max(total_list)
-        min_total = min(total_list)
+        rounders = [name for name, player in self.players.items() if player.points == max(round_list)]
+        leaders = [name for name, player in self.players.items() if player.total == max(total_list)]
+        losers = [name for name, player in self.players.items() if player.total == min(total_list)]
 
-        rounders = [name for name, player in self.players.items() if player.points == max_round]
-        leaders = [name for name, player in self.players.items() if player.total == max_total]
-        losers = [name for name, player in self.players.items() if player.total == min_total]
+        # rounders_str = ' and '.join(rounders)
+        # losers_str = ' and '.join(losers)
+        # leaders_str = ' and '.join(leaders)
 
-        rounders = ' and '.join(rounders)
-        leaders = ' and '.join(leaders)
-        losers = ' and '.join(losers)
-
-        round_phr = round_phr.replace('[NAME]', rounders)
-        leader_phr = leader_phr.replace('[NAME]', leaders)
-        loser_phr = loser_phr.replace('[NAME]', losers)
+        round_phr = round_phr.replace('[NAME]', random.choice(rounders))
+        leader_phr = leader_phr.replace('[NAME]', random.choice(leaders))
+        loser_phr = loser_phr.replace('[NAME]', random.choice(losers))
 
         phrase_choice = random.choice([round_phr, leader_phr, loser_phr])
 
-        self.narrator.config(text=phrase_choice)
+        self.narrator.config(text=phrase_choice)    
 
-        return leaders
+    
+    def save_game(self):
+        with open('game_logs.csv','w') as logs:
+            for name, player in self.players.items():
+
+                writer = csv.writer(logs,lineterminator='\n')
+                writer.writerow([name, player.total])
+
+
+class LeaderboardScreen(Frame):
+    def __init__(self, parent, controller, players: list[Player]):
+        super().__init__(parent)
+        self.controller = controller
+        self.players = players
+
+        total_list = [player.total for player in self.players.values()]
+        winners = [name for name, player in self.players.items() if player.total == max(total_list)]
+        winners_str = ' and '.join(winners)
+
+        namelist =''
+        scorelist=''
+        for name in self.players:
+            namelist+= (f'{name}\n')
+            scorelist+=(f'{self.players[name].total}\n')
+
+        # UI 
+        centerframe= Frame(self)
+        centerframe.grid(row=0,column=0,sticky='nsew',padx=100)
+        for i,j in zip(range(3), range(2)):
+            centerframe.rowconfigure(i, weight=1, pad=100)
+            centerframe.columnconfigure(i, weight=1)
+
+        title_label = Label(centerframe, text='GG!😎', font=TITLE_FONT)
+        title_label.grid(row=0,column=0,columnspan=2, sticky='EW')
+
+        winner_label = Label(centerframe, fg='red', text=f'Congratulations to {winners_str}!🎉', font=BOLD_FONT)
+        winner_label.grid(row=1,column=0,columnspan=2, sticky='EW')
+
+        names_label = Label(centerframe,text=namelist,font=NORMAL_FONT)
+        names_label.grid(row=2, column=0, sticky= 'ns')
+
+        score_label = Label(centerframe,text=scorelist,font=NORMAL_FONT)
+        score_label.grid(row=2, column=1, sticky= 'ns')
+
+
+
 
 app = MyApp()
 app.mainloop()

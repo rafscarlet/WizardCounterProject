@@ -1,19 +1,17 @@
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name, total=0):
         self.name = name
-        self.pred = 0
-        self.wins = 0
         self.points = 0
-        self.total = 0
+        self.total = int(total)
 
-    def calculate_points(self):
+    def calculate_points(self, pred, wins):
         # Win
-        if self.pred == self.wins:
-            self.points = 20 + 10 * self.pred
+        if pred == wins:
+            self.points = 20 + 10 * pred
         # Lose
         else:
-            diff = abs(self.pred-self.wins)
+            diff = abs(pred-wins)
             self.points = -10 * diff
         # Update total
         self.total += self.points
