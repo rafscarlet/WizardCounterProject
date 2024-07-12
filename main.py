@@ -383,7 +383,7 @@ class LeaderboardScreen(Frame):
         # UI
         centerframe = Frame(self)
         centerframe.config(bg=BLUE, highlightthickness=0)
-        centerframe.grid(row=0, column=0, sticky='nsew', padx=100)
+        centerframe.grid(row=0, column=0, sticky='nsew', padx=120)
         for i, j in zip(range(5), range(2)):
             centerframe.rowconfigure(i, weight=1, pad=50)
             centerframe.columnconfigure(j, weight=1)
