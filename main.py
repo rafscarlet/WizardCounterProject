@@ -71,8 +71,8 @@ class StartScreen(Frame):
         new_game_btn = Button(center_frame, text="New Game", width = 10,bg=BLACK, fg=WHITE, font=NORMAL_FONT, command=self.new_game)
         new_game_btn.grid(row=1, column=0, sticky='N', padx=50, pady=5)
 
-        load_btn = Button(center_frame, text="Load Game", width = 10,bg=BLACK, fg=WHITE, font=NORMAL_FONT, command=self.load_game)
-        load_btn.grid(row=2, column=0, sticky='N', padx=50, pady=5)
+        self.load_btn = Button(center_frame, text="Load Game", width = 10,bg=BLACK, fg=WHITE, font=NORMAL_FONT, state="normal",command=self.load_game)
+        self.load_btn.grid(row=2, column=0, sticky='N', padx=50, pady=5)
 
         rules_btn = Button(center_frame, text="Rules", width = 10,bg=BLACK, fg=WHITE, font=NORMAL_FONT, command=self.open_pdf)
         rules_btn.grid(row=3, column=0, sticky='N', padx=50, pady=5)
@@ -95,7 +95,9 @@ class StartScreen(Frame):
                     self.players[name] = Player(name, total=score)
 
             if self.players == {}:
+                self.load_btn.config(state="disabled")
                 raise ValueError
+                
 
         except:
             messagebox.showerror(title='Logs Not Found', message="There aren't any game logs. You need to start a new game.")
@@ -133,12 +135,12 @@ class PlayerInputScreen(Frame):
         label2 = Label(center_frame, text="Note: You have to enter 3-6 names!", bg=BLUE, fg=NAVY, font=SMALLER_FONT)
         label2.grid(row=2, column=0, pady=10, columnspan=2)
 
-        self.name_entry = Entry(center_frame, width=15, font=NORMAL_FONT, bg=WHITE)
+        self.name_entry = Entry(center_frame, width=15, state="normal", font=NORMAL_FONT, bg=WHITE)
         self.name_entry.focus()
         self.name_entry.grid(row=3, column=0, pady=10)
 
-        add_btn = Button(center_frame, text="Add", bg=NAVY, fg=WHITE, width=10, font=BOLD_FONT, command=self.add_player)
-        add_btn.grid(row=3, column=1)
+        self.add_btn = Button(center_frame, text="Add", state="normal", bg=NAVY, fg=WHITE, width=10, font=BOLD_FONT, command=self.add_player)
+        self.add_btn.grid(row=3, column=1)
 
         self.names_label = Label(center_frame, bg=BLUE, wraplength=300, width=40, height=2, font=SMALLER_FONT)
         self.update_label()
@@ -164,6 +166,8 @@ class PlayerInputScreen(Frame):
     def reset_players(self):
         self.players = {}
         self.update_label()
+        self.add_btn.config(state="normal")
+        self.name_entry.config(state="normal")
         self.name_entry.delete(0, END)
 
     def add_player(self):
@@ -184,6 +188,9 @@ class PlayerInputScreen(Frame):
             self.name_entry.delete(0, END)
 
         else:
+            if len(self.players) == 5:
+                self.add_btn.config(state="disabled")
+                self.name_entry.config(state="disabled")
             # Add each name to player dictionary
             self.players[name] = Player(name.strip())
             # Clear the entry box
